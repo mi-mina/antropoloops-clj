@@ -1,2 +1,0 @@
-(ns aloops.antropoloops
-  (:use []))
