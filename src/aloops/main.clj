@@ -4,45 +4,61 @@
   (:require [quil.core :as q]
             [quil.middleware :as m]
             [aloops.osc :as osc]
-            [aloops.oscapi :as oscapi]))
+            [aloops.oscapi :as oscapi]
+            [aloops.graphics :as g]))
 
 
-(def bg [25 25 25])
+
+(def initial-width 1200)
+(def initial-height 750)
 
 (defn setup []
+  (g/load-resources)
+  (q/frame-rate 3)
   ;; initial state
-  {:bg-color bg})
+  {:ix 0
+   :iy 0
+   :img-width initial-width
+   :img-height initial-height}
+  )
 
-;; No need of update function in this example
-;; (defn update [state]   )
+
+
+(defn update-state [state]
+  (g/adapt-to-frame state)
+  )
+
 
 (defn draw [state]
-  (apply q/background (:bg-color state)))
+  ;(apply q/background (:bg-color state))
+  (g/draw-background state)
+  )
 
 (defn mouse-clicked [state event]
   (oscapi/create-and-send-test-message)
   state)
 
-(defn alter-bg-color []
-  (map #(* % (rand-int 10)) bg))
-
 (defn osc-event [state message]
   (println "mensage recibido en la aplicación: " message)
   (println (.addrPattern message))
-  (-> state
-      (assoc :bg-color (alter-bg-color))))
+
+  )
 
 (q/defsketch papplet
              :title "osc"
              :setup setup
              :draw draw
-             :size :fullscreen
+             :size [initial-width initial-height] ;; :fullscreen
+             :update update-state
              :mouse-clicked mouse-clicked
              :osc-event osc-event
+             ;; :diplay 1
              :features [:keep-on-top
-                        :exit-on-close
+                        ;:exit-on-close
                         :no-bind-output
-                        :present]
+                        :resizable
+                        ;; :present
+                        ]
              :middleware [m/fun-mode])
 
 (oscapi/init-oscP5-communication papplet)
