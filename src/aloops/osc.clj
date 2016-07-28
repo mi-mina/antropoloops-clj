@@ -4,8 +4,8 @@
 
 (declare my-remote-location my-oscP5)
 
-(def in-port 12000)
-(def out-port 12000)
+(def in-port 9001)
+(def out-port 9000)
 
 (defn make-osc-message [path]
   (OscMessage. path))
@@ -14,8 +14,8 @@
     (.send my-oscP5 message my-remote-location))
 
 (defn init-oscP5 [papplet]
-  (def my-oscP5 (OscP5. papplet in-port)) ;; This is like oscP5 = new OscP5(this, inPort);
-  (def my-remote-location (NetAddress. "localhost" out-port))) ;;myRemoteLocation = new NetAddress("localhost", outPort);
+  (intern 'aloops.osc 'my-oscP5 (OscP5. papplet in-port)) ;; This is like oscP5 = new OscP5(this, inPort);
+  (intern 'aloops.osc 'my-remote-location (NetAddress. "localhost" out-port))) ;;myRemoteLocation = new NetAddress("localhost", outPort);
 
 ;; TODO
 ;; El código de abajo es el que estoy usando ahora en vez de lo definido en

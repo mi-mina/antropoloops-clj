@@ -1,8 +1,15 @@
 (ns aloops.graphics
   (:require [quil.core :as q]))
 
+(declare mundi)
+
+;; Parece que definir una variable def dentro de defn está muy mal.
+;; he buscado una alternativa: declare + intern
+;; supongo que también podría haber usado alter-var-root, pero no sé qué es mejor
 (defn load-resources []
-  (def mundi (q/load-image "resources/1_BDatos/mapa_1728x1080.jpg")))
+  (intern 'aloops.graphics 'mundi (q/load-image "resources/1_BDatos/mapa_1728x1080.jpg")))
+
+;; Importante!!! No olvidar que antes de pasar a uberjar tengo que quitar resources/ del path.
 
 (defn adapt-to-frame [state]
   (let [ratio (/ (q/width) (q/height))]

@@ -35,13 +35,13 @@
   )
 
 (defn mouse-clicked [state event]
-  (oscapi/create-and-send-test-message)
+  (oscapi/async-request-info-for-all-clips)
   state)
 
 (defn osc-event [state message]
-  (println "mensage recibido en la aplicación: " message)
-  (println (.addrPattern message))
-
+  (println "pasando por osc-event-fn. mensage: " message)
+  (println "pasando por osc-event-fn. path:" (.addrPattern message))
+  (oscapi/process-osc-event message)
   )
 
 (q/defsketch papplet
