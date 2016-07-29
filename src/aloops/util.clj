@@ -1,4 +1,11 @@
-(ns dat00.util
-  (:use [clojure.reflect] [clojure.java.io]
-        [clojure.data.json :as json :only [read-str]])
-  (:require [clojure.edn :as edn]))
+(ns aloops.util
+
+  )
+
+;; En este ns colocamos funciones auxiliares que usamos en un momento determinado
+;; pero que son genéricas y nos pueden servir en otro sitio.
+
+(defn substring? [sub st]
+  (if (not= (.indexOf st sub) -1)
+    true
+    false))

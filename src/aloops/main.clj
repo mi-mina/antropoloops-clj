@@ -1,30 +1,59 @@
 (ns aloops.main
-  (:import [oscP5 OscP5 OscMessage]
-           [netP5 NetAddress])
   (:require [quil.core :as q]
             [quil.middleware :as m]
-            [aloops.osc :as osc]
             [aloops.oscapi :as oscapi]
-            [aloops.graphics :as g]))
+            [aloops.graphics :as g]
+            [aloops.loopsapi :as loopsapi]))
 
 
 
 (def initial-width 1200)
 (def initial-height 750)
 
+
+(def ready? (atom false))
+
+#_(defn ask-ready? []
+  (if @ready?
+    (loopsapi/request-clips-loopend)
+    (do
+      (Thread/sleep 500)
+      (ask-ready?))))
+
+
+
+(future ;; creo una future para correr código en otro thread, para poderlo parar y que no bloquee mi thread principal
+  (Thread/sleep 500) ;; espero un poco para asrgurarme que el sketch está creado cuando empiece a recibir mensajes de ableton,
+                     ;; ya que los voy a procesar através de :osc-event
+  (loopsapi/request-clips-info) ;; pregunto por el track, clip y name de todos los clips que hay
+  ;(ask-ready?)
+  )
+
+
+
 (defn setup []
+  ;; Cargo la imagen de fondo y la vinculo a la variable mundi
   (g/load-resources)
-  (q/frame-rate 3)
+
+  ;; Pregunto por la información básica de cada clip, pero lo hago a través de una future
+  ;; (en otro thread) durmiéndolo primero medio segundo para asegurarme de que el estado inicial
+  ;; existe antes de que ableton empieze a responder, ya que voy a guardar el procesado de las repuestas
+  ;; en el estado de la aplicación, dentro de :antropoloops
+
+
   ;; initial state
-  {:ix 0
-   :iy 0
-   :img-width initial-width
-   :img-height initial-height}
+  ;; TODO podría meter todo lo relacionado con la imagen de fondo (:ix :iy ...) en un mapa asociado a una sola key
+  {:img-sz {:ix 0
+            :iy 0
+            :img-width initial-width
+            :img-height initial-height}
+   :loops-info {}}
   )
 
 
 
 (defn update-state [state]
+  ;; Esta función adapta la imagen de fondo a la proporción de la pantalla
   (g/adapt-to-frame state)
   )
 
@@ -35,13 +64,14 @@
   )
 
 (defn mouse-clicked [state event]
-  (oscapi/async-request-info-for-all-clips)
+  (println "state" state)
+  (println "loops-info" oscapi/loops-info)
   state)
 
 (defn osc-event [state message]
   (println "pasando por osc-event-fn. mensage: " message)
-  (println "pasando por osc-event-fn. path:" (.addrPattern message))
   (oscapi/process-osc-event message)
+  state
   )
 
 (q/defsketch papplet

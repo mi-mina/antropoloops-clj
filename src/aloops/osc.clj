@@ -2,6 +2,9 @@
   (:import [oscP5 OscP5 OscMessage]
            [netP5 NetAddress]))
 
+;; Aquí deberían estar todas las funciones que se comunican con oscP5
+
+
 (declare my-remote-location my-oscP5)
 
 (def in-port 9001)
@@ -13,9 +16,14 @@
 (defn send-osc-message [message]
     (.send my-oscP5 message my-remote-location))
 
+(defn get-address-pattern [message]
+  (.addrPattern message))
+
 (defn init-oscP5 [papplet]
   (intern 'aloops.osc 'my-oscP5 (OscP5. papplet in-port)) ;; This is like oscP5 = new OscP5(this, inPort);
   (intern 'aloops.osc 'my-remote-location (NetAddress. "localhost" out-port))) ;;myRemoteLocation = new NetAddress("localhost", outPort);
+
+
 
 ;; TODO
 ;; El código de abajo es el que estoy usando ahora en vez de lo definido en
@@ -40,3 +48,8 @@
       ;println("Estas son las propiedades "+properties.toString());
 
       )
+
+  #_(defn create-and-send-test-message []
+  (-> (make-osc-message "/test")
+      (.add "123")
+      (send-osc-message)))
