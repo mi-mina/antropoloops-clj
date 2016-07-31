@@ -27,20 +27,28 @@
 
 (defn draw [state]
   ;(apply q/background (:bg-color state))
-  (g/draw-background state)
+  (let [img-sz (:img-sz state)
+        ix (:ix img-sz)
+        iy (:iy img-sz)
+        iwidth (:img-width img-sz)
+        iheight (:img-height img-sz)
+        factor (/ iwidth 1280) ;; 1280 es el ancho de la imagen sobre la cual se han medido las coordenadas
+        ]
+
+  (g/draw-background ix iy iwidth iheight)
 
   (when (= 2 (:play state))
     (let [active-loops (map first (filter #(= 2 (val %)) (:loops-state state)))]
       (doseq [loop-index active-loops]
-        (g/draw-abanica-in-place state loop-index))))
+        (g/draw-abanica-in-place loop-index ix iy iwidth iheight factor))))
 
 
-  (g/draw-splash-screen state)
-  )
+  (g/draw-splash-screen ix iy iwidth iheight)
+  ))
 
 (defn mouse-clicked [state event]
   (println "state" state)
-  ;(println "loops-info" @oscapi/loops-info)
+  (println "loops-info" @oscapi/loops-info)
   state)
 
 (defn osc-event [state message]

@@ -34,13 +34,7 @@
                              :img-width (q/width)
                              :img-height (/ (q/width) 1.6))))))
 
-(defn draw-background [state]
-  (let [img-sz (:img-sz state)
-        ix (:ix img-sz)
-        iy (:iy img-sz)
-        iwidth (:img-width img-sz)
-        iheight (:img-height img-sz)]
-
+(defn draw-background [ix iy iwidth iheight]
     ;; background color = image background color
     (q/background 0 0 17)
 
@@ -57,16 +51,15 @@
     (q/fill 250)
     (q/text "www.antropoloops.com" (+ ix (* iwidth 0.015)) (+ iy (* iheight 0.95)))
     (q/fill 150)
-    (q/text "www.mi-mina.com" (+ ix (* iwidth 0.015)) (+ iy (* iheight 0.97)))))
+    (q/text "www.mi-mina.com" (+ ix (* iwidth 0.015)) (+ iy (* iheight 0.97))))
 
 ;; En el caso de las funciones que se ejecutan dentro de draw no tenemos que preocuparnos de
 ;; devolver el estado porque no es tenido en cuenta para nada.
 
-(defn draw-splash-screen [state]
+(defn draw-splash-screen [ix iy iwidth iheight]
   (if @loopsapi/ready?
     nil
-    (let [img-sz (:img-sz state)]
-      (q/image splash (:ix img-sz) (:iy img-sz) (:img-width img-sz) (:img-height img-sz)))))
+    (q/image splash ix iy iwidth iheight)))
 
 ;; Graphic elements
 
@@ -74,17 +67,20 @@
   (q/fill h s b)
   (q/ellipse 0 0 d d))
 
-(defn draw-abanica-in-place [state loop-index]
-  (let [info (loop-index @oscapi/loops-info)]
+(defn draw-abanica-in-place [loop-index ix iy iwidth iheight factor]
+  (let [info (loop-index @oscapi/loops-info)
+        x (+ ix (* factor (:x info)))
+        y (+ iy (* factor (:y info)))]
     (q/push-matrix)
-    (q/translate (:x info) (:y info))
+    (q/translate x y)
     ;TODO (q/rotate )
     (abanica 50 (:color-h info)(:color-s info)(:color-b info))
     (q/pop-matrix)))
 
+(defn draw-album-covers [state loop-index]
+  (let [info (loop-index @oscapi/loops-info)]
 
-
-
+  ))
 
 
 
