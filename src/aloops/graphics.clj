@@ -9,6 +9,7 @@
 (defn setup-graphics []
   (q/color-mode :hsb 360 100 100 100)
   (q/text-align :left :center)
+  ;; TODO añadir alguna tipografía en concreto?
   )
 
 (defn load-resources []
@@ -77,13 +78,20 @@
     (abanica 50 (:color-h info)(:color-s info)(:color-b info))
     (q/pop-matrix)))
 
-(defn draw-album-covers [state loop-index]
-  (let [info (loop-index @oscapi/loops-info)]
+(defn draw-album-covers [loop-index ix iy iwidth iheight]
+  (let [info (loop-index @oscapi/loops-info)
+        sz (/ iheight 5)
+        track (read-string (str (first (name loop-index))))
+        pos-x (+ ix (* sz track))
+        offset (/ sz 23)]
+    (q/image (:image info) pos-x iy sz sz)
+    (q/fill (:color-h info)(:color-s info)(:color-b info))
+    (q/rect pos-x (+ iy sz) sz (/ sz 9))
+    (q/fill 0 0 17)
+    (q/text (:lugar info) (+ pos-x offset) (+ iy sz offset))
+    (q/fill (:color-h info)(:color-s info)(:color-b info))
+    (q/text (:fecha info) (+ pos-x offset) (+ iy sz offset (/ sz 9)))
 
-  ))
-
-
-
-
+    ))
 
 

@@ -40,7 +40,8 @@
   (when (= 2 (:play state))
     (let [active-loops (map first (filter #(= 2 (val %)) (:loops-state state)))]
       (doseq [loop-index active-loops]
-        (g/draw-abanica-in-place loop-index ix iy iwidth iheight factor))))
+        (g/draw-abanica-in-place loop-index ix iy iwidth iheight factor)
+        (g/draw-album-covers loop-index ix iy iwidth iheight))))
 
 
   (g/draw-splash-screen ix iy iwidth iheight)
