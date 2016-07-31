@@ -92,7 +92,7 @@
     (swap! loops-info assoc index aloop)
     state)) ;; Devuelve el estado sin modificarlo
 
-(defn load-clip-state [state message]
+(defn load-clips-state [state message]
   (let [[track clip clip-state] (.arguments message)
         index (keyword (str track clip))]
     (assoc-in state [:loops-state index] clip-state)))
@@ -103,7 +103,7 @@
     (swap! loops-info assoc-in [index :loopend] loopend)
     state)) ;; Devuelve el estado sin modificarlo
 
-(defn load-track-info [state message]
+(defn load-tracks-info [state message]
   (let [[track track-state] (.arguments message)
         track-index (keyword (str track))
         track-property (keyword (clojure.string/replace (.addrPattern message) #"/live/" ""))]
@@ -112,6 +112,9 @@
 (defn load-tempo [state message]
   (assoc state :tempo (first (.arguments message))))
 
+(defn load-general-play [state message]
+  (assoc state :play (first (.arguments message))))
+
 
 ;; Función principal que procesa todos los mensajes recibidos de Ableton en :osc-event
 (defn process-osc-event [state message]
@@ -119,17 +122,18 @@
     (condp = path
       "/live/name/clip"        (load-loops-info state message)
       "/live/name/clip/done"   (do (println (first (.arguments message))) (reset! clip-info-received? true) state)
-      "/live/clip/info"        (load-clip-state state message)
+      "/live/clip/info"        (load-clips-state state message)
       "/live/clip/loopend"     (load-clips-loopend state message)
                                ;; Aunque la pregunta es con /live/clip/loopend_id, la respuesta es con /live/clip/loopend
-      "/live/volume"           (load-track-info state message)
-      "/live/solo"             (load-track-info state message)
-      "/live/mute"             (load-track-info state message)
+      "/live/volume"           (load-tracks-info state message)
+      "/live/solo"             (load-tracks-info state message)
+      "/live/mute"             (load-tracks-info state message)
       "/live/tempo"            (load-tempo state message)
-      "/live/play"             (do (println "general play state" (first (.arguments message))) state)
-      "/live/stop"             (do (println "general stop state" (first (.arguments message))) state)
+      "/live/play"             (load-general-play state message)
 
-      (do (println "not mapped. path: " (osc/get-address-pattern message))))))
+      #_(do (println "not mapped. path: " (osc/get-address-pattern message)))
+      state ;;Muy importante, si no hay match con ningún path tenemos que devolver el estado
+      )))
 
 
 
