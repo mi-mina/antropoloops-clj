@@ -65,16 +65,34 @@
 ;; Graphic elements
 
 (defn abanica [d h s b]
-  (q/fill h s b)
-  (q/ellipse 0 0 d d))
+  (let [diam1 50
+        diam2 100
+        steps 20
+        start (fn [x] (- (* (/ 3 2) Math/PI) (* x (/ (* 2 Math/PI) steps))))
+        stop (* (/ 3 2) Math/PI)
+        line-length 55
+        ]
+    (doseq [i (range steps)]
+      (q/fill h s b 25)
+      (q/no-stroke)
+      (q/arc 0 0 diam1 diam1 (start i) stop)
+      (q/fill h s b 2)
+      (q/arc 0 0 diam2 diam2 (start i) stop))
+    (q/stroke h s b)
+    (q/stroke-weight 1)
+    (q/line 0 0 0 (- line-length))
+    ))
 
-(defn draw-abanica-in-place [loop-index ix iy iwidth iheight factor]
+;; Se repite mucho código en los let de las siguientes funciones, no me gusta.
+
+(defn draw-abanica-in-place [loop-index ix iy iwidth iheight factor tempo]
   (let [info (loop-index @oscapi/loops-info)
         x (+ ix (* factor (:x info)))
-        y (+ iy (* factor (:y info)))]
+        y (+ iy (* factor (:y info)))
+        w (q/radians(/ (q/millis) (/ (* (:loopend info) 60 1000) (* tempo 360))))]
     (q/push-matrix)
     (q/translate x y)
-    ;TODO (q/rotate )
+    (q/rotate w)
     (abanica 50 (:color-h info)(:color-s info)(:color-b info))
     (q/pop-matrix)))
 
@@ -90,8 +108,33 @@
     (q/fill 0 0 17)
     (q/text (:lugar info) (+ pos-x offset) (+ iy sz offset))
     (q/fill (:color-h info)(:color-s info)(:color-b info))
-    (q/text (:fecha info) (+ pos-x offset) (+ iy sz offset (/ sz 9)))
+    (q/text (:fecha info) (+ pos-x offset) (+ iy sz offset (/ sz 9)))))
 
-    ))
+(defn draw-lines [loop-index ix iy iwidth iheight factor]
+  (let [info (loop-index @oscapi/loops-info)
+        sz (/ iheight 5)
+        track (read-string (str (first (name loop-index))))
+        pos-x (+ ix (* sz track))
+        offset (/ sz 23)
+        x1 (+ (+ pos-x offset) (/ (q/text-width (:fecha info)) 2))
+        y1 (+ iy sz (* 2 (/ sz 9)))
+        x2 (+ ix (* factor (:x info)))
+        y2 (+ iy (* factor (:y info)))]
+    (q/stroke (:color-h info)(:color-s info)(:color-b info))
+    (q/stroke-weight 2)
+    (q/line x1 y1 x2 y2)
+    (q/no-stroke)))
+
+
+
+
+
+
+
+
+
+
+
+
 
 

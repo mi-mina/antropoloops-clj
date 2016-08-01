@@ -32,20 +32,19 @@
         iy (:iy img-sz)
         iwidth (:img-width img-sz)
         iheight (:img-height img-sz)
-        factor (/ iwidth 1280) ;; 1280 es el ancho de la imagen sobre la cual se han medido las coordenadas
-        ]
+        factor (/ iwidth 1280)
+        tempo (:tempo state)] ;; 1280 es el ancho de la imagen sobre la cual se han medido las coordenadas
 
   (g/draw-background ix iy iwidth iheight)
 
   (when (= 2 (:play state))
     (let [active-loops (map first (filter #(= 2 (val %)) (:loops-state state)))]
       (doseq [loop-index active-loops]
-        (g/draw-abanica-in-place loop-index ix iy iwidth iheight factor)
-        (g/draw-album-covers loop-index ix iy iwidth iheight))))
+        (g/draw-abanica-in-place loop-index ix iy iwidth iheight factor tempo)
+        (g/draw-album-covers loop-index ix iy iwidth iheight)
+        (g/draw-lines loop-index ix iy iwidth iheight factor))))
 
-
-  (g/draw-splash-screen ix iy iwidth iheight)
-  ))
+  (g/draw-splash-screen ix iy iwidth iheight)))
 
 (defn mouse-clicked [state event]
   (println "state" state)
