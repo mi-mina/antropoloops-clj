@@ -64,13 +64,19 @@
 
 ;; Graphic elements
 
-(defn abanica [d h s b]
-  (let [diam1 50
-        diam2 100
+(defn abanica [d factor h s b]
+  (let [diam1 (* factor (cond
+                          (<= d 40) (* d (/ 3 4))
+                          (and (> d 40) (<= d 70)) (/ (- (* 4 d) 70) 3)
+                          (and (> d 70) (<= d 80)) (- (* d 5) 280)
+                          (> d 80) 120))
+        diam2 (* factor (cond
+                          (<= d 40) (* d 2)
+                          (> d 40) (* d 2.5)))
         steps 20
         start (fn [x] (- (* (/ 3 2) Math/PI) (* x (/ (* 2 Math/PI) steps))))
         stop (* (/ 3 2) Math/PI)
-        line-length 55
+        line-length (* (/ diam2 2) 1.1)
         ]
     (doseq [i (range steps)]
       (q/fill h s b 25)
@@ -83,17 +89,22 @@
     (q/line 0 0 0 (- line-length))
     ))
 
-;; Se repite mucho código en los let de las siguientes funciones, no me gusta.
+;; TODO The code below isn't DRY, It works, but I don't like it. Refactor it. Maybe using Plumbing and Graph?
+;; Podría juntarlo todo en una sola función con un let enorme. Cómo conseguir seguir teniendo distintas
+;; funciones para que quede claro que cada una se ocupa de una cosa distinta.
 
-(defn draw-abanica-in-place [loop-index ix iy iwidth iheight factor tempo]
+(defn draw-abanica-in-place [loop-index ix iy iwidth iheight factor state]
   (let [info (loop-index @oscapi/loops-info)
+        track (keyword (str (first (name loop-index))))
+        tempo (:tempo state)
+        volume (* 100 (get-in state [:tracks-info track :volume]))
         x (+ ix (* factor (:x info)))
         y (+ iy (* factor (:y info)))
-        w (q/radians(/ (q/millis) (/ (* (:loopend info) 60 1000) (* tempo 360))))]
+        w (q/radians (/ (q/millis) (/ (* (:loopend info) 60 1000) (* tempo 360))))]
     (q/push-matrix)
     (q/translate x y)
     (q/rotate w)
-    (abanica 50 (:color-h info)(:color-s info)(:color-b info))
+    (abanica volume factor (:color-h info)(:color-s info)(:color-b info))
     (q/pop-matrix)))
 
 (defn draw-album-covers [loop-index ix iy iwidth iheight]
@@ -109,6 +120,7 @@
     (q/text (:lugar info) (+ pos-x offset) (+ iy sz offset))
     (q/fill (:color-h info)(:color-s info)(:color-b info))
     (q/text (:fecha info) (+ pos-x offset) (+ iy sz offset (/ sz 9)))))
+;; TODO añadir transparencia cuando baja el volumen de 45
 
 (defn draw-lines [loop-index ix iy iwidth iheight factor]
   (let [info (loop-index @oscapi/loops-info)

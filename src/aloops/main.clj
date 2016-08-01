@@ -18,7 +18,10 @@
             :iy 0
             :img-width initial-width
             :img-height initial-height}
-   :play 1})
+   :play 1
+   :tempo 120
+   :tracks-info {}
+   :loops-state {}})
 
 (defn update-state [state]
   ;; Esta función adapta la imagen de fondo a la proporción de la pantalla
@@ -32,15 +35,14 @@
         iy (:iy img-sz)
         iwidth (:img-width img-sz)
         iheight (:img-height img-sz)
-        factor (/ iwidth 1280)
-        tempo (:tempo state)] ;; 1280 es el ancho de la imagen sobre la cual se han medido las coordenadas
+        factor (/ iwidth 1280)] ;; 1280 es el ancho de la imagen sobre la cual se han medido las coordenadas
 
   (g/draw-background ix iy iwidth iheight)
 
   (when (= 2 (:play state))
     (let [active-loops (map first (filter #(= 2 (val %)) (:loops-state state)))]
       (doseq [loop-index active-loops]
-        (g/draw-abanica-in-place loop-index ix iy iwidth iheight factor tempo)
+        (g/draw-abanica-in-place loop-index ix iy iwidth iheight factor state)
         (g/draw-album-covers loop-index ix iy iwidth iheight)
         (g/draw-lines loop-index ix iy iwidth iheight factor))))
 
@@ -48,7 +50,7 @@
 
 (defn mouse-clicked [state event]
   (println "state" state)
-  (println "loops-info" @oscapi/loops-info)
+  ;(println "loops-info" @oscapi/loops-info)
   state)
 
 (defn osc-event [state message]
