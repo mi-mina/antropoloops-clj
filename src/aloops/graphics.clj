@@ -76,8 +76,7 @@
         steps 20
         start (fn [x] (- (* (/ 3 2) Math/PI) (* x (/ (* 2 Math/PI) steps))))
         stop (* (/ 3 2) Math/PI)
-        line-length (* (/ diam2 2) 1.1)
-        ]
+        line-length (* (/ diam2 2) 1.05)]
     (doseq [i (range steps)]
       (q/fill h s b 25)
       (q/no-stroke)
@@ -86,10 +85,12 @@
       (q/arc 0 0 diam2 diam2 (start i) stop))
     (q/stroke h s b)
     (q/stroke-weight 1)
-    (q/line 0 0 0 (- line-length))
-    ))
+    (q/line 0 0 0 (- line-length))))
 
 ;; TODO The code below isn't DRY, It works, but I don't like it. Refactor it. Maybe using Plumbing and Graph?
+;; Lo que se repite es lo que está en los let. Gran parte de la información que necesitan las distitas
+;; funciones es compartida. Lo he solucionado parcialmente sacando algunas cosas a un let en el lugar
+;; desde el que son llamadas (en main) y pasándole los datos en forma de argumentos.
 ;; Podría juntarlo todo en una sola función con un let enorme. Cómo conseguir seguir teniendo distintas
 ;; funciones para que quede claro que cada una se ocupa de una cosa distinta.
 
@@ -100,7 +101,8 @@
         volume (* 100 (get-in state [:tracks-info track :volume]))
         x (+ ix (* factor (:x info)))
         y (+ iy (* factor (:y info)))
-        w (q/radians (/ (q/millis) (/ (* (:loopend info) 60 1000) (* tempo 360))))]
+        loopend (loop-index @oscapi/loopends)
+        w (q/radians (/ (q/millis) (/ (* loopend 60 1000) (* tempo 360))))]
     (q/push-matrix)
     (q/translate x y)
     (q/rotate w)

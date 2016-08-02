@@ -37,6 +37,7 @@
         iheight (:img-height img-sz)
         factor (/ iwidth 1280)] ;; 1280 es el ancho de la imagen sobre la cual se han medido las coordenadas
 
+  ;; (println (q/current-frame-rate)) El frame-rate debería ser cercano a 60 y no llega a 8.
   (g/draw-background ix iy iwidth iheight)
 
   (when (= 2 (:play state))
@@ -50,7 +51,8 @@
 
 (defn mouse-clicked [state event]
   (println "state" state)
-  ;(println "loops-info" @oscapi/loops-info)
+  (println "loops-info" @oscapi/loops-info)
+  (println "loopends" @oscapi/loopends)
   state)
 
 (defn osc-event [state message]

@@ -18,6 +18,9 @@
 ;; Además, para solicitar los loopends de cada clip, necesito saber qué clips están cargados porque la query se hace por cada slot, es decir,
 ;; tengo que adjuntar el track y el clip en cada mensaje.
 
+(def loopends (atom {}))
+;; Defino un sitio distinto donde guargar la info sobre los loopends de los clips
+
 (def clip-info-received? (atom false))
 
 
@@ -30,7 +33,7 @@
 (defn async-request-info-for-all-clips []
   (osc/send-osc-message (osc/make-osc-message "/live/name/clip")))
 
-(defn async-request-clip-state []
+#_(defn async-request-clip-state []
   (doseq [i (keys @loops-info)]
     (let [a (read-string (str (first (name i))))
           b (read-string (str (second (name i))))]
@@ -38,13 +41,23 @@
           (.add (int-array [a b]))
           (osc/send-osc-message)))))
 
-(defn async-request-clips-loopend []
+(defn async-request-one-clip-state [track clip]
+  (-> (osc/make-osc-message "/live/clip/info")
+      (.add (int-array [track clip]))
+      (osc/send-osc-message)))
+
+#_(defn async-request-clips-loopend []
   (doseq [i (keys @loops-info)]
     (let [a (read-string (str (first (name i))))
           b (read-string (str (second (name i))))]
       (-> (osc/make-osc-message "/live/clip/loopend_id")
           (.add (int-array [a b]))
           (osc/send-osc-message)))))
+
+(defn async-request-one-clip-loopend [track clip]
+  (-> (osc/make-osc-message "/live/clip/loopend_id")
+      (.add (int-array [track clip]))
+      (osc/send-osc-message)))
 
 (defn async-request-tempo []
   (-> (osc/make-osc-message "/live/tempo")
@@ -90,17 +103,22 @@
         index (keyword (str (:track aloop) (:clip aloop)))]
     (println "loading loops info for" nombre "(track" track "clip" clip ")")
     (swap! loops-info assoc index aloop)
+    (async-request-one-clip-state track clip) ;; pregunto por el estado de un clip cada vez que reciba un mensaje
+                                              ;; sobre su ubicación. Como lo guardo en un sitio distinto a loops-info
+                                              ;; no debo tener problemas de que se pierdan mensajes.
+    (async-request-one-clip-loopend track clip)
     state)) ;; Devuelve el estado sin modificarlo
 
 (defn load-clips-state [state message]
   (let [[track clip clip-state] (.arguments message)
         index (keyword (str track clip))]
+    ;; (println track clip clip-state)
     (assoc-in state [:loops-state index] clip-state)))
 
 (defn load-clips-loopend [state message]
   (let [[track clip loopend] (.arguments message)
         index (keyword (str track clip))]
-    (swap! loops-info assoc-in [index :loopend] loopend)
+    (swap! loopends assoc index loopend)
     state)) ;; Devuelve el estado sin modificarlo
 
 (defn load-tracks-info [state message]
