@@ -125,6 +125,7 @@
   (let [[track track-state] (.arguments message)
         track-index (keyword (str track))
         track-property (keyword (clojure.string/replace (.addrPattern message) #"/live/" ""))]
+    ;; (println track track-state)
     (assoc-in state [:tracks-info track-index track-property] track-state)))
 
 (defn load-tempo [state message]

@@ -2,7 +2,8 @@
   (:require [quil.core :as q]
             [quil.middleware :as m]
             [aloops.oscapi :as oscapi]
-            [aloops.graphics :as g]))
+            [aloops.graphics :as g]
+            [aloops.util :as u]))
 
 (def initial-width 1280)
 (def initial-height 800)
@@ -41,11 +42,19 @@
   (g/draw-background ix iy iwidth iheight)
 
   (when (= 2 (:play state))
-    (let [active-loops (map first (filter #(= 2 (val %)) (:loops-state state)))]
+    (let [clips-play-on (map first (filter #(= 2 (val %)) (:loops-state state)))
+          tracks-mute-on (->> (filter #(= 1 (:mute (val %))) (:tracks-info state))
+                              (map (comp read-string name first)))
+          tracks-solo-on (->> (filter #(= 1 (:solo (val %))) (:tracks-info state))
+                              (map (comp read-string name first)))
+          active-loops (if (empty? tracks-solo-on)
+                         (reduce
+                           #(if (some (fn [x] (= x (u/get-track-int %2))) tracks-mute-on) % (conj % %2))
+                           [] clips-play-on)
+                         (filter #(= (first tracks-solo-on) (u/get-track-int %)) clips-play-on))]
       (doseq [loop-index active-loops]
         (g/draw-abanica-in-place loop-index ix iy iwidth iheight factor state)
-        (g/draw-album-covers loop-index ix iy iwidth iheight)
-        (g/draw-lines loop-index ix iy iwidth iheight factor))))
+        (g/draw-album-covers loop-index ix iy iwidth iheight factor state))))
 
   (g/draw-splash-screen ix iy iwidth iheight)))
 

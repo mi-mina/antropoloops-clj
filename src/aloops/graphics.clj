@@ -1,7 +1,8 @@
 (ns aloops.graphics
   (:require [quil.core :as q]
             [aloops.loopsapi :as loopsapi]
-            [aloops.oscapi :as oscapi]))
+            [aloops.oscapi :as oscapi]
+            [aloops.util :as u]))
 
 (declare mundi)
 (declare splash)
@@ -64,8 +65,9 @@
 
 ;; Graphic elements
 
-(defn abanica [d factor h s b]
-  (let [diam1 (* factor (cond
+(defn abanica [diam factor h s b]
+  (let [ d (* diam 100)
+         diam1 (* factor (cond
                           (<= d 40) (* d (/ 3 4))
                           (and (> d 40) (<= d 70)) (/ (- (* 4 d) 70) 3)
                           (and (> d 70) (<= d 80)) (- (* d 5) 280)
@@ -96,9 +98,9 @@
 
 (defn draw-abanica-in-place [loop-index ix iy iwidth iheight factor state]
   (let [info (loop-index @oscapi/loops-info)
-        track (keyword (str (first (name loop-index))))
+        track (u/get-track-key loop-index)
         tempo (:tempo state)
-        volume (* 100 (get-in state [:tracks-info track :volume]))
+        volume (get-in state [:tracks-info track :volume])
         x (+ ix (* factor (:x info)))
         y (+ iy (* factor (:y info)))
         loopend (loop-index @oscapi/loopends)
@@ -109,35 +111,40 @@
     (abanica volume factor (:color-h info)(:color-s info)(:color-b info))
     (q/pop-matrix)))
 
-(defn draw-album-covers [loop-index ix iy iwidth iheight]
+(defn draw-album-covers [loop-index ix iy iwidth iheight factor state]
   (let [info (loop-index @oscapi/loops-info)
         sz (/ iheight 5)
-        track (read-string (str (first (name loop-index))))
-        pos-x (+ ix (* sz track))
-        offset (/ sz 23)]
-    (q/image (:image info) pos-x iy sz sz)
-    (q/fill (:color-h info)(:color-s info)(:color-b info))
-    (q/rect pos-x (+ iy sz) sz (/ sz 9))
-    (q/fill 0 0 17)
-    (q/text (:lugar info) (+ pos-x offset) (+ iy sz offset))
-    (q/fill (:color-h info)(:color-s info)(:color-b info))
-    (q/text (:fecha info) (+ pos-x offset) (+ iy sz offset (/ sz 9)))))
-;; TODO añadir transparencia cuando baja el volumen de 45
-
-(defn draw-lines [loop-index ix iy iwidth iheight factor]
-  (let [info (loop-index @oscapi/loops-info)
-        sz (/ iheight 5)
-        track (read-string (str (first (name loop-index))))
-        pos-x (+ ix (* sz track))
+        track-int (u/get-track-int loop-index)
+        track-key (u/get-track-key loop-index)
+        pos-x (+ ix (* sz track-int))
         offset (/ sz 23)
+        volume (get-in state [:tracks-info track-key :volume])
+        alfa (if (<= volume 0.4) (* volume (/ 100 0.4)) 100)
         x1 (+ (+ pos-x offset) (/ (q/text-width (:fecha info)) 2))
         y1 (+ iy sz (* 2 (/ sz 9)))
         x2 (+ ix (* factor (:x info)))
         y2 (+ iy (* factor (:y info)))]
-    (q/stroke (:color-h info)(:color-s info)(:color-b info))
+
+    ;; Draw covers
+    (q/tint 360 alfa)
+    (q/image (:image info) pos-x iy sz sz)
+    (q/no-tint)
+
+    ;; Draw places and dates
+    (q/fill (:color-h info) (:color-s info) (:color-b info) alfa)
+    (q/no-stroke)
+    (q/rect pos-x (+ iy sz) sz (/ sz 9))
+    (q/text (:fecha info) (+ pos-x offset) (+ iy sz offset (/ sz 9)))
+    (q/fill 0 alfa)
+    (q/text (:lugar info) (+ pos-x offset) (+ iy sz offset))
+
+    ;; Draw lines
+    (q/stroke (:color-h info)(:color-s info)(:color-b info) alfa)
     (q/stroke-weight 2)
     (q/line x1 y1 x2 y2)
     (q/no-stroke)))
+
+
 
 
 
