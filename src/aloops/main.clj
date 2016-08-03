@@ -22,12 +22,13 @@
    :play 1
    :tempo 120
    :tracks-info {}
-   :loops-state {}})
+   :loops-state {}
+   :last-loop :00}) ;;pongo un valor inicial para que no pete. Da igual si no es el último loop, porque tiene que pasar
+                    ;; por la comprobación de estar entre los loops activos
 
 (defn update-state [state]
   ;; Esta función adapta la imagen de fondo a la proporción de la pantalla
-  (g/adapt-to-frame state)
-  )
+  (g/adapt-to-frame state))
 
 (defn draw [state]
   ;(apply q/background (:bg-color state))
@@ -36,27 +37,30 @@
         iy (:iy img-sz)
         iwidth (:img-width img-sz)
         iheight (:img-height img-sz)
-        factor (/ iwidth 1280)] ;; 1280 es el ancho de la imagen sobre la cual se han medido las coordenadas
+        factor (/ iwidth 1280)
+        last-loop (:last-loop state)] ;; 1280 es el ancho de la imagen sobre la cual se han medido las coordenadas
 
-  ;; (println (q/current-frame-rate)) El frame-rate debería ser cercano a 60 y no llega a 8.
-  (g/draw-background ix iy iwidth iheight)
+    ;; (println (q/current-frame-rate)) El frame-rate debería ser cercano a 60 y no llega a 8.
+    (g/draw-background ix iy iwidth iheight)
 
-  (when (= 2 (:play state))
-    (let [clips-play-on (map first (filter #(= 2 (val %)) (:loops-state state)))
-          tracks-mute-on (->> (filter #(= 1 (:mute (val %))) (:tracks-info state))
-                              (map (comp read-string name first)))
-          tracks-solo-on (->> (filter #(= 1 (:solo (val %))) (:tracks-info state))
-                              (map (comp read-string name first)))
-          active-loops (if (empty? tracks-solo-on)
-                         (reduce
-                           #(if (some (fn [x] (= x (u/get-track-int %2))) tracks-mute-on) % (conj % %2))
-                           [] clips-play-on)
-                         (filter #(= (first tracks-solo-on) (u/get-track-int %)) clips-play-on))]
-      (doseq [loop-index active-loops]
-        (g/draw-abanica-in-place loop-index ix iy iwidth iheight factor state)
-        (g/draw-album-covers loop-index ix iy iwidth iheight factor state))))
+    (when (= 2 (:play state))
+      (let [clips-play-on (map first (filter #(= 2 (val %)) (:loops-state state)))
+            tracks-mute-on (->> (filter #(= 1 (:mute (val %))) (:tracks-info state))
+                                (map (comp read-string name first)))
+            tracks-solo-on (->> (filter #(= 1 (:solo (val %))) (:tracks-info state))
+                                (map (comp read-string name first)))
+            active-loops (if (empty? tracks-solo-on)
+                           (reduce
+                             #(if (some (fn [x] (= x (u/get-track-int %2))) tracks-mute-on) % (conj % %2))
+                             [] clips-play-on)
+                           (filter #(= (first tracks-solo-on) (u/get-track-int %)) clips-play-on))]
+        (doseq [loop-index active-loops]
+          (g/draw-abanica-in-place loop-index ix iy iwidth iheight factor state)
+          (g/draw-album-covers loop-index ix iy iwidth iheight factor state))
+        (g/draw-last-loop last-loop active-loops ix iy iwidth iheight state)
+        ))
 
-  (g/draw-splash-screen ix iy iwidth iheight)))
+    (g/draw-splash-screen ix iy iwidth iheight)))
 
 (defn mouse-clicked [state event]
   (println "state" state)

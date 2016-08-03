@@ -66,8 +66,8 @@
 ;; Graphic elements
 
 (defn abanica [diam factor h s b]
-  (let [ d (* diam 100)
-         diam1 (* factor (cond
+  (let [d (* diam 100)
+        diam1 (* factor (cond
                           (<= d 40) (* d (/ 3 4))
                           (and (> d 40) (<= d 70)) (/ (- (* 4 d) 70) 3)
                           (and (> d 70) (<= d 80)) (- (* d 5) 280)
@@ -119,7 +119,7 @@
         pos-x (+ ix (* sz track-int))
         offset (/ sz 23)
         volume (get-in state [:tracks-info track-key :volume])
-        alfa (if (<= volume 0.4) (* volume (/ 100 0.4)) 100)
+        alfa (if (<= volume 0.4) (* volume (/ 100 0.4)) 100) ;;Repasar esto
         x1 (+ (+ pos-x offset) (/ (q/text-width (:fecha info)) 2))
         y1 (+ iy sz (* 2 (/ sz 9)))
         x2 (+ ix (* factor (:x info)))
@@ -144,7 +144,35 @@
     (q/line x1 y1 x2 y2)
     (q/no-stroke)))
 
+(defn draw-last-loop [last-loop active-loops ix iy iwidth iheight state]
+  (let [info (get @oscapi/loops-info last-loop)
+        index (some #(= last-loop %) active-loops)
+        track-key (u/get-track-key last-loop) ;; Si en vez de last-loop pongo index peta cuando todavía no he lanzado un clip
+        volume (get-in state [:tracks-info track-key :volume])
+        alfa (if (<= volume 0.4) (* volume (/ 100 0.4)) 100)
+        rect-sz (/ iheight 13)
+        rx (- (+ ix iwidth) rect-sz)
+        ry (- (+ iy iheight) rect-sz)
+        x-offset (/ rect-sz 10)
+        y-offset (/ rect-sz 4)]
+    (when index
+      ;; square
+      (q/fill (:color-h info)(:color-s info)(:color-b info) alfa)
+      (q/no-stroke)
+      (q/rect rx ry rect-sz rect-sz)
 
+      ;; meta info
+      (q/fill 0 alfa)
+      (q/text "title" (+ rx x-offset) (+ ry y-offset))
+      (q/text "artist" (+ rx x-offset) (+ ry (* 2 y-offset)))
+      (q/text "album" (+ rx x-offset) (+ ry (* 3 y-offset)))
+
+      (q/text-align :right :center)
+      (q/fill 230 alfa)
+      (q/text (:titulo info) (- rx x-offset) (+ ry y-offset))
+      (q/text (:artista info) (- rx x-offset) (+ ry (* 2 y-offset)))
+      (q/text (:album info) (- rx x-offset) (+ ry (* 3 y-offset)))
+      (q/text-align :left :center))))
 
 
 

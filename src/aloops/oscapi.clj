@@ -12,16 +12,10 @@
 ;; En loops-info guardo toda la información que pido una vez al comienzo de la sesión y no la vuelvo a pedir más a no
 ;; ser que se cambie de sesión. (habría que resetear la aplicación entera)
 
-;; Un atom para saber cuándo han llegado todos los mensajes requeridos por "/live/name/clip"
-;; En loops-info voy a guardar también loopend, ya que es un valor que en principio no va a cambiar tampoco a lo largo de la sesión
-;; Sólo puedo guardar algo nuevo en loops-info una vez que me he asegurado que ya ha recibido toda la información
-;; Además, para solicitar los loopends de cada clip, necesito saber qué clips están cargados porque la query se hace por cada slot, es decir,
-;; tengo que adjuntar el track y el clip en cada mensaje.
-
 (def loopends (atom {}))
 ;; Defino un sitio distinto donde guargar la info sobre los loopends de los clips
-
-(def clip-info-received? (atom false))
+;; TODO PRobar a meter la info de los loopends de nuevo junto con loops-info, haciendo que loops-info
+;; sea un agent en vez de un atom
 
 
 ;; Iniciar comunicación con Ableton ********************************************************
@@ -33,26 +27,10 @@
 (defn async-request-info-for-all-clips []
   (osc/send-osc-message (osc/make-osc-message "/live/name/clip")))
 
-#_(defn async-request-clip-state []
-  (doseq [i (keys @loops-info)]
-    (let [a (read-string (str (first (name i))))
-          b (read-string (str (second (name i))))]
-      (-> (osc/make-osc-message "/live/clip/info")
-          (.add (int-array [a b]))
-          (osc/send-osc-message)))))
-
 (defn async-request-one-clip-state [track clip]
   (-> (osc/make-osc-message "/live/clip/info")
       (.add (int-array [track clip]))
       (osc/send-osc-message)))
-
-#_(defn async-request-clips-loopend []
-  (doseq [i (keys @loops-info)]
-    (let [a (read-string (str (first (name i))))
-          b (read-string (str (second (name i))))]
-      (-> (osc/make-osc-message "/live/clip/loopend_id")
-          (.add (int-array [a b]))
-          (osc/send-osc-message)))))
 
 (defn async-request-one-clip-loopend [track clip]
   (-> (osc/make-osc-message "/live/clip/loopend_id")
@@ -115,6 +93,13 @@
     ;; (println track clip clip-state)
     (assoc-in state [:loops-state index] clip-state)))
 
+(defn load-last-loop [state message]
+  (let [[track clip clip-state] (.arguments message)
+        index (keyword (str track clip))]
+    (if (= 2 clip-state)
+      (assoc state :last-loop index)
+      state)))
+
 (defn load-clips-loopend [state message]
   (let [[track clip loopend] (.arguments message)
         index (keyword (str track clip))]
@@ -140,8 +125,8 @@
   (let [path (osc/get-address-pattern message)]
     (condp = path
       "/live/name/clip"        (load-loops-info state message)
-      "/live/name/clip/done"   (do (println (first (.arguments message))) (reset! clip-info-received? true) state)
-      "/live/clip/info"        (load-clips-state state message)
+      "/live/clip/info"        (-> (load-clips-state state message)
+                                   (load-last-loop message))
       "/live/clip/loopend"     (load-clips-loopend state message)
                                ;; Aunque la pregunta es con /live/clip/loopend_id, la respuesta es con /live/clip/loopend
       "/live/volume"           (load-tracks-info state message)
