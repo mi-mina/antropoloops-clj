@@ -1,9 +1,18 @@
 (ns aloops.oscapi
   (:require [quil.core :as q]
+            [quil.helpers.seqs :as h]
             [aloops.osc :as osc]
             [aloops.bd :as bd]))
 
 ;; No tengo muy clara cuál sería la diferencia entre este ns y loopsapi
+
+;; A continuación defino varios atoms donde guardo partes del estado de la aplicación.
+;; que no guardo en state por diversas razones.
+;; En realidad son singletons (una única instancia y con acceso global), con lo cual
+;; no estoy manejando el estado muy bien.
+;; Además tengo el estado de la applicación dividido entre estos atoms globales
+;; y el state que genera quil y que es pasado por las funciones setup, update, etc.
+;; TODO tratar de montar un sistema usando components de S. Sierra
 
 (def loops-info (atom {}))
 ;; De momento he definido loops-info como un atom. No sé si hubiera gran cantidad de clips, por ejemplo, en una sesión entera
@@ -17,6 +26,7 @@
 ;; TODO PRobar a meter la info de los loopends de nuevo junto con loops-info, haciendo que loops-info
 ;; sea un agent en vez de un atom
 
+(def wave (atom {}))
 
 ;; Iniciar comunicación con Ableton ********************************************************
 (defn init-oscP5-communication [papplet]
@@ -79,26 +89,42 @@
                :x (:coordX bd-lugar)
                :y (:coordY bd-lugar)}
         index (keyword (str (:track aloop) (:clip aloop)))]
+
     (println "loading loops info for" nombre "(track" track "clip" clip ")")
+
     (swap! loops-info assoc index aloop)
+    (swap! wave assoc index (h/seq->stream (range 0 500 20)))
+
     (async-request-one-clip-state track clip) ;; pregunto por el estado de un clip cada vez que reciba un mensaje
                                               ;; sobre su ubicación. Como lo guardo en un sitio distinto a loops-info
                                               ;; no debo tener problemas de que se pierdan mensajes.
     (async-request-one-clip-loopend track clip)
-    state)) ;; Devuelve el estado sin modificarlo
+    state)) ;; Esta función es procesada por :osc-event que toma el state de la aplicación
+            ;; como argumento y lo devuelve supuestamente modificado.
+            ;; En este caso, como no estamos modificando el state, sino un atom
+            ;; externo a él, tenemos que devolver el estado sin modificarlo
+            ;; Esta función no es una función pura porque tiene side-effects.
 
 (defn load-clips-state [state message]
   (let [[track clip clip-state] (.arguments message)
         index (keyword (str track clip))]
     ;; (println track clip clip-state)
+
+    ;; Este es un efecto secundario que quiero que ocurra y que igual no debería
+    ;; estar aquí dentro sino ser una función separada
+    ;; Lo que hago aquí es que cuando el clip pasa a estar en stop, vuelvo a asociar
+    ;; cada index con un stream nuevo, ya que el anterior se ha consumido
+    (when (= clip-state 1)
+        (swap! wave assoc index (h/seq->stream (range 0 500 20))))
+
     (assoc-in state [:loops-state index] clip-state)))
 
 (defn load-last-loop [state message]
   (let [[track clip clip-state] (.arguments message)
         index (keyword (str track clip))]
     (if (= 2 clip-state)
-      (assoc state :last-loop index)
-      state)))
+        (assoc state :last-loop index))
+      state))
 
 (defn load-clips-loopend [state message]
   (let [[track clip loopend] (.arguments message)
@@ -127,6 +153,8 @@
       "/live/name/clip"        (load-loops-info state message)
       "/live/clip/info"        (-> (load-clips-state state message)
                                    (load-last-loop message))
+                               ;; El resultado del primer argumento de -> es el state
+                               ;; que se lo paso al segundo argumento en la segunda posición
       "/live/clip/loopend"     (load-clips-loopend state message)
                                ;; Aunque la pregunta es con /live/clip/loopend_id, la respuesta es con /live/clip/loopend
       "/live/volume"           (load-tracks-info state message)

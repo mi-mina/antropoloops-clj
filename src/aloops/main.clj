@@ -3,7 +3,8 @@
             [quil.middleware :as m]
             [aloops.oscapi :as oscapi]
             [aloops.graphics :as g]
-            [aloops.util :as u]))
+            [aloops.util :as u]
+            [quil.helpers.seqs :as h]))
 
 (def initial-width 1280)
 (def initial-height 800)
@@ -23,8 +24,9 @@
    :tempo 120
    :tracks-info {}
    :loops-state {}
-   :last-loop :00}) ;;pongo un valor inicial para que no pete. Da igual si no es el último loop, porque tiene que pasar
-                    ;; por la comprobación de estar entre los loops activos
+   :last-loop :00 ;;pongo un valor inicial para que no pete. Da igual si no es el último loop, porque tiene que pasar
+                  ;; por la comprobación de estar entre los loops activos
+   :diam (h/seq->stream (h/range-incl 10 400 20))})
 
 (defn update-state [state]
   ;; Esta función adapta la imagen de fondo a la proporción de la pantalla
@@ -64,8 +66,10 @@
 
 (defn mouse-clicked [state event]
   (println "state" state)
-  (println "loops-info" @oscapi/loops-info)
-  (println "loopends" @oscapi/loopends)
+  ;(println "loops-info" @oscapi/loops-info)
+  ;(println "loopends" @oscapi/loopends)
+  (println "wave" @oscapi/wave)
+
   state)
 
 (defn osc-event [state message]

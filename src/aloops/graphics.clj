@@ -65,7 +65,7 @@
 
 ;; Graphic elements
 
-(defn abanica [diam factor h s b]
+(defn draw-abanica [diam factor h s b]
   (let [d (* diam 100)
         diam1 (* factor (cond
                           (<= d 40) (* d (/ 3 4))
@@ -89,6 +89,14 @@
     (q/stroke-weight 1)
     (q/line 0 0 0 (- line-length))))
 
+;; TODO hacer que la onda sea más gruesa al principio y se vaya desvaneciendo.
+;; probar la velocidad en el ordenador de rubi
+(defn draw-wave [d factor h s b]
+    (q/stroke h s b)
+    (q/no-fill)
+    (q/ellipse 0 0 (* d factor) (* d factor)))
+
+
 ;; TODO The code below isn't DRY, It works, but I don't like it. Refactor it. Maybe using Plumbing and Graph?
 ;; Lo que se repite es lo que está en los let. Gran parte de la información que necesitan las distitas
 ;; funciones es compartida. Lo he solucionado parcialmente sacando algunas cosas a un let en el lugar
@@ -96,6 +104,7 @@
 ;; Podría juntarlo todo en una sola función con un let enorme. Cómo conseguir seguir teniendo distintas
 ;; funciones para que quede claro que cada una se ocupa de una cosa distinta.
 
+;; TODO eliminar de los argumentos iwidht e iheight que no se usan
 (defn draw-abanica-in-place [loop-index ix iy iwidth iheight factor state]
   (let [info (loop-index @oscapi/loops-info)
         track (u/get-track-key loop-index)
@@ -104,13 +113,18 @@
         x (+ ix (* factor (:x info)))
         y (+ iy (* factor (:y info)))
         loopend (loop-index @oscapi/loopends)
-        w (q/radians (/ (q/millis) (/ (* loopend 60 1000) (* tempo 360))))]
+        w (q/radians (/ (q/millis) (/ (* loopend 60 1000) (* tempo 360))))
+        diam ((loop-index @oscapi/wave))
+        ]
     (q/push-matrix)
     (q/translate x y)
     (q/rotate w)
-    (abanica volume factor (:color-h info)(:color-s info)(:color-b info))
+    (draw-abanica volume factor (:color-h info)(:color-s info)(:color-b info))
+    (when diam  ;;uso when para que no pete cuando se haya consumido la seq
+      (draw-wave diam factor (:color-h info)(:color-s info)(:color-b info)))
     (q/pop-matrix)))
 
+;; TODO eliminar de los argumentos iwidht e iheight que no se usan
 (defn draw-album-covers [loop-index ix iy iwidth iheight factor state]
   (let [info (loop-index @oscapi/loops-info)
         sz (/ iheight 5)
@@ -173,9 +187,6 @@
       (q/text (:artista info) (- rx x-offset) (+ ry (* 2 y-offset)))
       (q/text (:album info) (- rx x-offset) (+ ry (* 3 y-offset)))
       (q/text-align :left :center))))
-
-
-
 
 
 
