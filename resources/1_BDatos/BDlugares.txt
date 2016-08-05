@@ -39,7 +39,7 @@
 {"lugar":"Argentina","coordX":361,"coordY":688,"pais":""},
 {"lugar":"Paraguay","coordX":375,"coordY":634,"pais":""},
 {"lugar":"Amazonia","coordX":375,"coordY":546,"pais":"Brasil"},
-{"lugar":"Buenos Aires","coordX":377,"coordY":679,"pais":"Argentina"},
+{"lugar":"BuenosAiresBuenosAires","coordX":377,"coordY":679,"pais":"Argentina"},
 {"lugar":"Parque Nacional do Xingu","coordX":377,"coordY":578,"pais":"Brasil"},
 {"lugar":"Isla Grande de Tierra del Fuego","coordX":383,"coordY":769,"pais":"Argentina"},
 {"lugar":"Parque Indígena de Xingu","coordX":385,"coordY":579,"pais":"Brasil"},

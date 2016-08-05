@@ -66,6 +66,9 @@
   (let [[track clip nombre] (.arguments message)
         bd-song (first (filter #(= (:nombreArchivo %) nombre) bd/loops)) ;; pido el first porque el resultado es una secuencia de un elemento ({})
         bd-lugar (first (filter #(= (:lugar %) (:lugar bd-song)) bd/lugares))
+        lugar (if (> (count (:lugar bd-lugar)) 19)
+                   (apply str (concat (take 19 (:lugar bd-lugar)) [\. \. \.]))
+                   (:lugar bd-lugar)) ;; Si el nombre del lugar es demasiado grande y no cabe en el rectángulo lo corto
         aloop {:track track
                :clip clip
                :nombre nombre
@@ -85,7 +88,7 @@
                           6 (q/random 25 40)
                           7 (q/random 50 65))
                :image (q/load-image (str "resources/0_portadas/" nombre ".jpg"))
-               :lugar (:lugar bd-lugar)
+               :lugar lugar
                :x (:coordX bd-lugar)
                :y (:coordY bd-lugar)}
         index (keyword (str (:track aloop) (:clip aloop)))]

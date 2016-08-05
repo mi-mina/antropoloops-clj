@@ -49,13 +49,11 @@
     (q/rect 0 0 (q/width) (+ (/ iheight 5) (/ (- (q/height) iheight) 2))) ;;rectángulo donde van las portadas
 
     ;; Credits
-    (q/text-align :right :center)
     (q/text-size (* iwidth 0.01))
     (q/fill 250)
-    (q/text "www.antropoloops.com" (- (+ ix iwidth) (* iwidth 0.015)) (+ iy (* iheight 0.95)))
+    (q/text "www.antropoloops.com" (+ ix (* iwidth 0.015)) (+ iy (* iheight 0.95)))
     (q/fill 150)
-    (q/text "www.mi-mina.com" (- (+ ix iwidth) (* iwidth 0.015)) (+ iy (* iheight 0.97)))
-    (q/text-align :left :center))
+    (q/text "www.mi-mina.com" (+ ix (* iwidth 0.015)) (+ iy (* iheight 0.97))))
 
 ;; En el caso de las funciones que se ejecutan dentro de draw no tenemos que preocuparnos de
 ;; devolver el estado porque no es tenido en cuenta para nada.
@@ -124,8 +122,9 @@
     (q/push-matrix)
     (q/translate x y)
     (q/rotate w)
-    (draw-abanica volume factor (:color-h info)(:color-s info)(:color-b info))
-    (when diam  ;;uso when para que no pete cuando se haya consumido la seq
+    (when (> volume 0.05)
+      (draw-abanica volume factor (:color-h info)(:color-s info)(:color-b info)))
+    (when (and diam (> volume 0.05))  ;;uso when para que no pete cuando se haya consumido la seq
       (draw-wave diam factor (:color-h info)(:color-s info)(:color-b info)))
     (q/pop-matrix)))
 
@@ -169,7 +168,7 @@
         volume (get-in state [:tracks-info track-key :volume])
         alfa (if (<= volume 0.4) (* volume (/ 100 0.4)) 100)
         rect-sz (/ iheight 13)
-        rx ix
+        rx (- (+ ix iwidth) rect-sz)
         ry (- (+ iy iheight) rect-sz)
         x-offset (/ rect-sz 8)
         y-offset (/ rect-sz 4)]
@@ -181,16 +180,16 @@
 
       ;; meta info
       (q/fill 0 alfa)
-      (q/text-align :right :center)
-      (q/text "title" (- (+ rx rect-sz) x-offset) (+ ry y-offset))
-      (q/text "artist" (- (+ rx rect-sz) x-offset) (+ ry (* 2 y-offset)))
-      (q/text "album" (- (+ rx rect-sz) x-offset) (+ ry (* 3 y-offset)))
-      (q/text-align :left :center)
+      (q/text "title" (+ rx  x-offset) (+ ry y-offset))
+      (q/text "artist" (+ rx  x-offset) (+ ry (* 2 y-offset)))
+      (q/text "album" (+ rx  x-offset) (+ ry (* 3 y-offset)))
 
       (q/fill 230 alfa)
-      (q/text (:titulo info) (+ rx rect-sz x-offset) (+ ry y-offset))
-      (q/text (:artista info) (+ rx rect-sz x-offset) (+ ry (* 2 y-offset)))
-      (q/text (:album info) (+ rx rect-sz x-offset) (+ ry (* 3 y-offset))))))
+      (q/text-align :right :center)
+      (q/text (:titulo info) (- rx x-offset) (+ ry y-offset))
+      (q/text (:artista info) (- rx x-offset) (+ ry (* 2 y-offset)))
+      (q/text (:album info) (- rx x-offset) (+ ry (* 3 y-offset)))
+      (q/text-align :left :center))))
 
 
 

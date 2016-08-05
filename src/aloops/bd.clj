@@ -1,5 +1,5 @@
 (ns aloops.bd
-  (:require [clojure.data.json :as json :refer [read-str]]))
+  (:require [clojure.data.json :as json]))
 
 (def loops (json/read-str
             (slurp "resources/1_BDatos/BDLoops.txt") :key-fn keyword ))
