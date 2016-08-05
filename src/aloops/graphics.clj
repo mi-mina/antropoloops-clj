@@ -91,10 +91,14 @@
 
 ;; TODO hacer que la onda sea más gruesa al principio y se vaya desvaneciendo.
 ;; probar la velocidad en el ordenador de rubi
+;; La onda debe dibujarse sólo si el volumen no está a cero
+
 (defn draw-wave [d factor h s b]
-    (q/stroke h s b)
+  (let [a (- 500 (/ (* 500 (* d d))(+ 50 (* d d))))]
+    (q/stroke h s b (- 100 (/ d 5)))
+    (q/stroke-weight a)
     (q/no-fill)
-    (q/ellipse 0 0 (* d factor) (* d factor)))
+    (q/ellipse 0 0 (* d factor) (* d factor))))
 
 
 ;; TODO The code below isn't DRY, It works, but I don't like it. Refactor it. Maybe using Plumbing and Graph?
@@ -104,8 +108,7 @@
 ;; Podría juntarlo todo en una sola función con un let enorme. Cómo conseguir seguir teniendo distintas
 ;; funciones para que quede claro que cada una se ocupa de una cosa distinta.
 
-;; TODO eliminar de los argumentos iwidht e iheight que no se usan
-(defn draw-abanica-in-place [loop-index ix iy iwidth iheight factor state]
+(defn draw-abanica-in-place [loop-index ix iy factor state]
   (let [info (loop-index @oscapi/loops-info)
         track (u/get-track-key loop-index)
         tempo (:tempo state)
@@ -124,8 +127,7 @@
       (draw-wave diam factor (:color-h info)(:color-s info)(:color-b info)))
     (q/pop-matrix)))
 
-;; TODO eliminar de los argumentos iwidht e iheight que no se usan
-(defn draw-album-covers [loop-index ix iy iwidth iheight factor state]
+(defn draw-album-covers [loop-index ix iy iheight factor state]
   (let [info (loop-index @oscapi/loops-info)
         sz (/ iheight 5)
         track-int (u/get-track-int loop-index)

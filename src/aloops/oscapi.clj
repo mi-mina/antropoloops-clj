@@ -93,7 +93,7 @@
     (println "loading loops info for" nombre "(track" track "clip" clip ")")
 
     (swap! loops-info assoc index aloop)
-    (swap! wave assoc index (h/seq->stream (range 0 500 20)))
+    (swap! wave assoc index (h/seq->stream (range 40 500 10)))
 
     (async-request-one-clip-state track clip) ;; pregunto por el estado de un clip cada vez que reciba un mensaje
                                               ;; sobre su ubicación. Como lo guardo en un sitio distinto a loops-info
@@ -115,7 +115,7 @@
     ;; Lo que hago aquí es que cuando el clip pasa a estar en stop, vuelvo a asociar
     ;; cada index con un stream nuevo, ya que el anterior se ha consumido
     (when (= clip-state 1)
-        (swap! wave assoc index (h/seq->stream (range 0 500 20))))
+        (swap! wave assoc index (h/seq->stream (range 40 500 10))))
 
     (assoc-in state [:loops-state index] clip-state)))
 
@@ -123,8 +123,8 @@
   (let [[track clip clip-state] (.arguments message)
         index (keyword (str track clip))]
     (if (= 2 clip-state)
-        (assoc state :last-loop index))
-      state))
+      (assoc state :last-loop index)
+      state)))
 
 (defn load-clips-loopend [state message]
   (let [[track clip loopend] (.arguments message)

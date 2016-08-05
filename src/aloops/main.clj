@@ -57,8 +57,8 @@
                              [] clips-play-on)
                            (filter #(= (first tracks-solo-on) (u/get-track-int %)) clips-play-on))]
         (doseq [loop-index active-loops]
-          (g/draw-abanica-in-place loop-index ix iy iwidth iheight factor state)
-          (g/draw-album-covers loop-index ix iy iwidth iheight factor state))
+          (g/draw-abanica-in-place loop-index ix iy factor state)
+          (g/draw-album-covers loop-index ix iy iheight factor state))
         (g/draw-last-loop last-loop active-loops ix iy iwidth iheight state)
         ))
 
