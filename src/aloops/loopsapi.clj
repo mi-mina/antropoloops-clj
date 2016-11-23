@@ -1,6 +1,5 @@
-(ns aloops.loopsapi
-  (:require [aloops.bd :as bd]
-            [aloops.oscapi :as oscapi]))
+#_(ns aloops.loopsapi
+  (:require [aloops.oscapi :as oscapi]))
 
 (def ready? (atom false))
 

@@ -1,6 +1,5 @@
 (ns aloops.graphics
   (:require [quil.core :as q]
-            [aloops.loopsapi :as loopsapi]
             [aloops.oscapi :as oscapi]
             [aloops.util :as u]))
 
@@ -20,21 +19,22 @@
 ;; he buscado una alternativa: declare + intern
 ;; supongo que también podría haber usado alter-var-root, pero no sé qué es mejor
 ;; Importante!!! No olvidar que antes de pasar a uberjar tengo que quitar resources/ del path.
+;; Esto último no lo tengo tan claro. Ahora parece que sí funciona.
 
 (defn adapt-to-frame [state]
   (let [ratio (/ (q/width) (q/height))
         img-sz (:img-sz state)]
     (if (>= ratio 1.6)
-      (assoc state :img-sz (assoc img-sz
-                             :ix (/ (- (q/width) (* (q/height) 1.6)) 2)
-                             :iy 0
-                             :img-width (* (q/height) 1.6)
-                             :img-height (q/height)))
-      (assoc state :img-sz (assoc img-sz
-                             :ix 0
-                             :iy (/ (- (q/height) (/ (q/width) 1.6)) 2)
-                             :img-width (q/width)
-                             :img-height (/ (q/width) 1.6))))))
+        (assoc state :img-sz (assoc img-sz
+                               :ix (/ (- (q/width) (* (q/height) 1.6)) 2)
+                               :iy 0
+                               :img-width (* (q/height) 1.6)
+                               :img-height (q/height)))
+        (assoc state :img-sz (assoc img-sz
+                               :ix 0
+                               :iy (/ (- (q/height) (/ (q/width) 1.6)) 2)
+                               :img-width (q/width)
+                               :img-height (/ (q/width) 1.6))))))
 
 (defn draw-background [ix iy iwidth iheight]
     ;; background color = image background color
@@ -59,7 +59,7 @@
 ;; devolver el estado porque no es tenido en cuenta para nada.
 
 (defn draw-splash-screen [ix iy iwidth iheight]
-  (if @loopsapi/ready?
+  (if @oscapi/ready?
     nil
     (q/image splash ix iy iwidth iheight)))
 

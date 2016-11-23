@@ -4,7 +4,8 @@
             [aloops.oscapi :as oscapi]
             [aloops.graphics :as g]
             [aloops.util :as u]
-            [quil.helpers.seqs :as h]))
+            [quil.helpers.seqs :as h])
+  (:gen-class))
 
 (def initial-width 1280)
 (def initial-height 800)
@@ -30,6 +31,7 @@
 
 (defn update-state [state]
   ;; Esta función adapta la imagen de fondo a la proporción de la pantalla
+  ;; Forma parte de la estructura del sketch :update
   (g/adapt-to-frame state))
 
 (defn draw [state]
@@ -65,9 +67,10 @@
     (g/draw-splash-screen ix iy iwidth iheight)))
 
 (defn mouse-clicked [state event]
+  ;; Used only for debbuging so far
   (println "state" state)
-  ;(println "loops-info" @oscapi/loops-info)
-  ;(println "loopends" @oscapi/loopends)
+  ;; (println "loops-info" @oscapi/loops-info)
+  ;; (println "loopends" @oscapi/loopends)
   (println "wave" @oscapi/wave)
 
   state)
@@ -76,7 +79,7 @@
   ;(println "pasando por osc-event-fn. mensage: " message)
   (oscapi/process-osc-event state message))
 
-(q/defsketch papplet
+#_(q/defsketch papplet
              :title "osc"
              :setup setup
              :draw draw
@@ -93,6 +96,25 @@
                         ]
              :middleware [m/fun-mode])
 
-(oscapi/init-oscP5-communication papplet)
+#_(oscapi/init-oscP5-communication papplet)
 
-(defn -main [& args] )
+#_(defn -main [& args] )
+
+(defn -main [& args]
+  (let [v (q/sketch
+            :title "osc"
+            :setup setup
+            :draw draw
+            :size  [initial-width initial-height] ;; :fullscreen ;;
+            :update update-state
+            :mouse-clicked mouse-clicked
+            :osc-event osc-event
+            ;; :diplay 1
+            :features [ ;; :keep-on-top
+                        :exit-on-close
+                        :no-bind-output
+                        :resizable
+                        ;; :present
+                        ]
+            :middleware [m/fun-mode])]
+    (oscapi/init-oscP5-communication v)))

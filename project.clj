@@ -8,4 +8,5 @@
                  [de.sojamo/oscp5 "0.9.8"]
                  [org.clojure/data.json "0.2.6"]
                  ]
+  :aot [aloops.main]
   :main aloops.main)

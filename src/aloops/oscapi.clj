@@ -12,7 +12,7 @@
 ;; no estoy manejando el estado muy bien.
 ;; Además tengo el estado de la applicación dividido entre estos atoms globales
 ;; y el state que genera quil y que es pasado por las funciones setup, update, etc.
-;; TODO tratar de montar un sistema usando components de S. Sierra
+;; TODO: tratar de montar un sistema usando components de S. Sierra
 
 (def loops-info (atom {}))
 ;; De momento he definido loops-info como un atom. No sé si hubiera gran cantidad de clips, por ejemplo, en una sesión entera
@@ -23,19 +23,37 @@
 
 (def loopends (atom {}))
 ;; Defino un sitio distinto donde guargar la info sobre los loopends de los clips
-;; TODO PRobar a meter la info de los loopends de nuevo junto con loops-info, haciendo que loops-info
+;; TODO: Probar a meter la info de los loopends de nuevo junto con loops-info, haciendo que loops-info
 ;; sea un agent en vez de un atom
 
 (def wave (atom {}))
+
+(def ready? (atom false))
 
 ;; Iniciar comunicación con Ableton ********************************************************
 (defn init-oscP5-communication [papplet]
   (osc/init-oscP5 papplet))
 
 
-;; Funciones para preguntar a ableton ********************************************************
+;; Funciones para preguntar a Ableton ********************************************************
 (defn async-request-info-for-all-clips []
-  (osc/send-osc-message (osc/make-osc-message "/live/name/clip")))
+  (println "asking ableton for all clip's info")
+  (-> (osc/make-osc-message "/live/name/clip")
+      (osc/send-osc-message)))
+
+(defn async-request-tempo []
+  (println "asking ableton for the tempo")
+  (-> (osc/make-osc-message "/live/tempo")
+      (osc/send-osc-message)))
+
+(defn async-request-volume-mute-solo []
+  (println "asking ableton for track related info: volume, mute and solo")
+  (doseq [paths ["/live/volume" "/live/mute" "/live/solo"]
+          track (range 0 8)]
+    (-> (osc/make-osc-message paths)
+        (.add track)
+        (osc/send-osc-message))))
+
 
 (defn async-request-one-clip-state [track clip]
   (-> (osc/make-osc-message "/live/clip/info")
@@ -46,17 +64,6 @@
   (-> (osc/make-osc-message "/live/clip/loopend_id")
       (.add (int-array [track clip]))
       (osc/send-osc-message)))
-
-(defn async-request-tempo []
-  (-> (osc/make-osc-message "/live/tempo")
-      (osc/send-osc-message)))
-
-(defn async-request-volume-mute-solo []
-  (doseq [paths ["/live/volume" "/live/mute" "/live/solo"]
-          track (range 0 8)]
-    (-> (osc/make-osc-message paths)
-        (.add track)
-        (osc/send-osc-message))))
 
 
 ;; Funciones para procesar los mensajes decibidos de Ableton ********************************************************
@@ -96,7 +103,7 @@
     (println "loading loops info for" nombre "(track" track "clip" clip ")")
 
     (swap! loops-info assoc index aloop)
-    (swap! wave assoc index (h/seq->stream (range 40 500 10)))
+    (swap! wave assoc index (h/seq->stream (range 40 500 10))) ;; h/seq->stream son los diámetros de la onda
 
     (async-request-one-clip-state track clip) ;; pregunto por el estado de un clip cada vez que reciba un mensaje
                                               ;; sobre su ubicación. Como lo guardo en un sitio distinto a loops-info
@@ -172,7 +179,19 @@
 
 
 
+;; Ask Ableton for initial info.
+;; Debería estar esta future en otro sitio???
+(future ;; creo una future para correr código en otro thread, para poderlo dormir y que no bloquee mi thread principal
+  (Thread/sleep 2000) ;; espero un poco para asegurarme que el sketch está creado cuando empiece a recibir mensajes de ableton,
+  ;; ya que los voy a procesar através de :osc-event
+  (async-request-info-for-all-clips) ;; pregunto por el track, clip y name de todos los clips que hay
+  (async-request-tempo)
+  (async-request-volume-mute-solo)
+  (Thread/sleep 1000) ;; para darle tiempo a procesar la última request antes de quitar la splashscreen
+  (reset! ready? true))
 
+;; Qué pasa con el thread que abre la future? Se queda abierto?
+;; Es eso un problema? Se puede cerrar él solo a sí mismo?
 
 
 
